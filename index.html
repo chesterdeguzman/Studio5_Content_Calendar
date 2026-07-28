@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Interactive monthly content calendar and client approval dashboard." />
+  <title>Content Calendar Approval Dashboard</title>
+  <link rel="stylesheet" href="styles.css?v=3" />
+</head>
+<body>
+  <section id="accessGate" class="access-gate" aria-label="Studio5 workspace login">
+    <div class="access-layout">
+      <aside class="access-showcase" aria-hidden="true">
+        <div class="showcase-brand">
+          <div class="access-logo access-logo-large">S5</div>
+          <div>
+            <strong>Studio5</strong>
+            <span>Content Operations</span>
+          </div>
+        </div>
+        <div class="showcase-copy">
+          <p class="eyebrow">One shared creative workspace</p>
+          <h1>Plan. Review.<br />Publish with clarity.</h1>
+          <p>Keep content, feedback, approvals, and monthly targets organised in one collaborative calendar.</p>
+        </div>
+        <div class="showcase-features">
+          <span>Live cloud sync</span>
+          <span>Client approvals</span>
+          <span>Monthly overview</span>
+        </div>
+      </aside>
+
+      <form id="accessForm" class="access-card">
+        <div class="mobile-access-brand">
+          <div class="access-logo">S5</div>
+          <span>Studio5</span>
+        </div>
+        <p class="eyebrow">Secure shared workspace</p>
+        <h2>Welcome back</h2>
+        <p class="access-description">Enter your workspace key to continue to the content calendar.</p>
+        <label for="accessCode">Workspace key</label>
+        <div class="access-input-wrap">
+          <input id="accessCode" type="password" autocomplete="current-password" required placeholder="Enter workspace key" />
+          <button id="toggleAccessCode" type="button" class="access-toggle" aria-label="Show workspace key">Show</button>
+        </div>
+        <label class="remember-row">
+          <input id="rememberAccess" type="checkbox" checked />
+          <span>Keep me signed in on this device for 30 days</span>
+        </label>
+        <p id="accessError" class="access-error hidden" role="alert"></p>
+        <button id="accessSubmit" class="primary-btn access-submit" type="submit">
+          <span class="access-submit-label">Open workspace</span>
+          <span aria-hidden="true">→</span>
+        </button>
+        <div class="access-trust"><span></span> Shared access for your approved team and clients</div>
+      </form>
+    </div>
+    <p class="access-footer">Studio5 Content Calendar · Private workspace</p>
+  </section>
+
+  <div id="calendarApp" class="app-shell hidden">
+    <aside class="sidebar">
+      <div class="brand-block">
+        <div class="logo-mark">CC</div>
+        <div>
+          <h1>Content Calendar</h1>
+          <p>Planning & Approval</p>
+        </div>
+      </div>
+
+      <nav class="side-nav">
+        <button class="nav-item active" data-view="calendar"><span>▦</span> Calendar</button>
+        <button class="nav-item" data-view="overview"><span>◫</span> Overview</button>
+        <button class="nav-item" data-view="settings"><span>⚙</span> Settings</button>
+      </nav>
+
+      <div class="sidebar-card">
+        <span class="eyebrow">Monthly target</span>
+        <strong>12 contents</strong>
+        <small>8 carousels · 4 reels</small>
+      </div>
+
+      <div class="sidebar-footer">
+        <button id="exportDataBtn" class="ghost-btn full">Export JSON</button>
+        <label class="ghost-btn full file-label">
+          Import JSON
+          <input id="importDataInput" type="file" accept=".json" hidden />
+        </label>
+        <button id="resetMonthBtn" class="danger-link">Reset current month</button>
+        <button id="lockWorkspaceBtn" class="ghost-btn full" type="button">Lock Workspace</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Client content workflow</p>
+          <h2 id="pageTitle">Monthly Content Calendar</h2>
+        </div>
+
+        <div class="topbar-actions">
+          <label class="select-control brand-control">
+            <span>Brand</span>
+            <select id="brandSelect" aria-label="Choose brand"></select>
+          </label>
+          <label class="select-control month-control">
+            <span>Month</span>
+            <input id="monthPicker" type="month" aria-label="Choose month" />
+          </label>
+          <div id="syncStatus" class="sync-status" data-state="connecting">Connecting…</div>
+          <button id="addContentBtn" class="primary-btn">+ Add Content</button>
+        </div>
+      </header>
+
+      <section id="calendarView" class="view active">
+        <div class="welcome-banner">
+          <div>
+            <p class="eyebrow">Monthly planning workspace</p>
+            <h3>Plan, review and approve every post in one place.</h3>
+            <p>Each week is structured for 2 carousels and 1 reel, with client feedback and approval tracking built in.</p>
+          </div>
+          <div class="banner-shape" aria-hidden="true">✦</div>
+        </div>
+        <div class="summary-grid">
+          <article class="summary-card">
+            <span>Total Content</span>
+            <strong id="totalCount">0 / 12</strong>
+            <div class="progress"><span id="totalProgress"></span></div>
+          </article>
+
+          <article class="summary-card">
+            <span>Carousels</span>
+            <strong id="carouselCount">0 / 8</strong>
+            <div class="progress"><span id="carouselProgress"></span></div>
+          </article>
+
+          <article class="summary-card">
+            <span>Reels</span>
+            <strong id="reelCount">0 / 4</strong>
+            <div class="progress"><span id="reelProgress"></span></div>
+          </article>
+
+          <article class="summary-card">
+            <span>Approved</span>
+            <strong id="approvedCount">0</strong>
+            <div class="progress"><span id="approvedProgress"></span></div>
+          </article>
+        </div>
+
+        <div class="toolbar">
+          <div class="filter-group">
+            <select id="statusFilter">
+              <option value="all">All statuses</option>
+              <option value="Pending">Pending</option>
+              <option value="Approved">Approved</option>
+              <option value="Revise">Revise</option>
+              <option value="Rejected">Rejected</option>
+            </select>
+
+            <select id="typeFilter">
+              <option value="all">All content types</option>
+              <option value="Carousel">Carousel</option>
+              <option value="Static">Static</option>
+              <option value="Memorable Day / Special Day">Memorable Day / Special Day</option>
+              <option value="Reel">Reel</option>
+              <option value="Talking Head">Talking Head</option>
+            </select>
+
+            <input id="searchInput" type="search" placeholder="Search title, caption, notes..." />
+          </div>
+
+          <div class="view-toggle">
+            <button class="toggle-btn active" data-layout="board">Week Board</button>
+            <button class="toggle-btn" data-layout="table">Table</button>
+          </div>
+        </div>
+
+        <div id="calendarBoard" class="calendar-board"></div>
+        <div id="calendarTableWrap" class="calendar-table-wrap hidden">
+          <table class="calendar-table">
+            <thead>
+              <tr>
+                <th>Week</th>
+                <th>Date</th>
+                <th>Content</th>
+                <th>Type</th>
+                <th>Platform</th>
+                <th>Status</th>
+                <th>Notes</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="calendarTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="overviewView" class="view">
+        <div class="overview-grid">
+          <article class="panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Brand overview</p>
+                <h3>Monthly completion</h3>
+              </div>
+            </div>
+            <div id="brandOverviewList" class="brand-overview-list"></div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Approval status</p>
+                <h3>Current brand breakdown</h3>
+              </div>
+            </div>
+            <div id="statusBreakdown" class="status-breakdown"></div>
+          </article>
+        </div>
+      </section>
+
+      <section id="settingsView" class="view">
+        <div class="settings-grid">
+          <article class="panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Brand management</p>
+                <h3>Add or remove brands</h3>
+              </div>
+            </div>
+
+            <form id="addBrandForm" class="inline-form">
+              <input id="newBrandInput" type="text" placeholder="New brand name" required />
+              <button class="primary-btn" type="submit">Add Brand</button>
+            </form>
+
+            <div id="brandManagementList" class="brand-management-list"></div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Monthly requirements</p>
+                <h3>Content targets</h3>
+              </div>
+            </div>
+
+            <div class="requirements">
+              <label>
+                Total content per month
+                <input id="targetTotal" type="number" min="1" value="12" />
+              </label>
+              <label>
+                Carousel target
+                <input id="targetCarousel" type="number" min="0" value="8" />
+              </label>
+              <label>
+                Reel target
+                <input id="targetReel" type="number" min="0" value="4" />
+              </label>
+              <button id="saveTargetsBtn" class="primary-btn">Save Targets</button>
+            </div>
+          </article>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="contentDialog">
+    <form id="contentForm" method="dialog">
+      <div class="modal-header">
+        <div>
+          <p class="eyebrow">Content details</p>
+          <h3 id="dialogTitle">Add Content</h3>
+        </div>
+        <button type="button" id="closeDialogBtn" class="icon-btn" aria-label="Close">×</button>
+      </div>
+
+      <input id="contentId" type="hidden" />
+
+      <div class="form-grid">
+        <label>
+          Week
+          <select id="contentWeek" required>
+            <option value="1">Week 1</option>
+            <option value="2">Week 2</option>
+            <option value="3">Week 3</option>
+            <option value="4">Week 4</option>
+          </select>
+        </label>
+
+        <label>
+          Publish Date
+          <input id="contentDate" type="date" />
+        </label>
+
+        <label class="span-2">
+          Content Title / Topic
+          <input id="contentTitle" type="text" placeholder="e.g. 5 Signs Your Roof Needs Repair" required />
+        </label>
+
+        <label>
+          Content Category
+          <select id="contentType" required>
+            <option value="Carousel">Carousel</option>
+            <option value="Static">Static</option>
+            <option value="Memorable Day / Special Day">Memorable Day / Special Day</option>
+            <option value="Reel">Reel</option>
+            <option value="Talking Head">Talking Head</option>
+          </select>
+        </label>
+
+        <label class="span-2">
+          Content Focus / Content Text
+          <textarea id="contentFocus" rows="4" placeholder="Write the exact content focus here. Example: Question: Why is regular roof maintenance important? Answer: It helps prevent leaks, costly repairs, and structural damage."></textarea>
+          <small class="field-help">Use this for questions and answers, key messages, hooks, slide points, reel ideas, or the exact text the designer should feature.</small>
+        </label>
+
+        <label>
+          Platform
+          <select id="contentPlatform">
+            <option value="Instagram">Instagram</option>
+            <option value="Facebook">Facebook</option>
+            <option value="Instagram + Facebook">Instagram + Facebook</option>
+            <option value="LinkedIn">LinkedIn</option>
+            <option value="TikTok">TikTok</option>
+            <option value="YouTube">YouTube</option>
+            <option value="Multiple Platforms">Multiple Platforms</option>
+          </select>
+        </label>
+
+        <label>
+          Content Pillar
+          <input id="contentPillar" type="text" placeholder="Educational, promotional, testimonial..." />
+        </label>
+
+        <label>
+          Assigned To
+          <input id="contentAssignee" type="text" placeholder="Designer / Editor / Copywriter" />
+        </label>
+
+        <label class="span-2">
+          Caption / Content Copy
+          <textarea id="contentCaption" rows="4" placeholder="Insert caption, body copy, or talking points..."></textarea>
+        </label>
+
+        <label class="span-2">
+          Visual Direction / Reel Notes
+          <textarea id="contentVisual" rows="3" placeholder="Describe the visual, footage, transitions, graphics, references..."></textarea>
+        </label>
+
+        <label>
+          Reference Link
+          <input id="contentLink" type="url" placeholder="https://..." />
+        </label>
+
+        <label>
+          Approval Status
+          <select id="contentStatus">
+            <option value="Pending">Pending</option>
+            <option value="Approved">Approved</option>
+            <option value="Revise">Revise</option>
+            <option value="Rejected">Rejected</option>
+          </select>
+        </label>
+
+        <label class="span-2">
+          Client Notes
+          <textarea id="contentNotes" rows="4" placeholder="Client can type approval notes or revision feedback here..."></textarea>
+        </label>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" id="deleteContentBtn" class="danger-btn hidden">Delete</button>
+        <div class="modal-actions-right">
+          <button type="button" id="duplicateContentBtn" class="ghost-btn hidden">Duplicate</button>
+          <button type="button" id="cancelDialogBtn" class="ghost-btn">Cancel</button>
+          <button type="submit" class="primary-btn">Save Content</button>
+        </div>
+      </div>
+    </form>
+  </dialog>
+
+  <template id="contentCardTemplate">
+    <article class="content-card">
+      <div class="card-top">
+        <span class="type-badge"></span>
+        <button class="icon-btn edit-btn" aria-label="Edit content">•••</button>
+      </div>
+      <h4 class="card-title"></h4>
+      <p class="card-caption"></p>
+      <div class="meta-row">
+        <span class="date-text"></span>
+        <span class="platform-text"></span>
+      </div>
+      <div class="status-actions">
+        <button data-status="Approved">Approve</button>
+        <button data-status="Revise">Revise</button>
+        <button data-status="Rejected">Reject</button>
+      </div>
+      <div class="client-note-preview"></div>
+      <div class="card-footer">
+        <span class="status-pill"></span>
+        <span class="assignee-text"></span>
+      </div>
+    </article>
+  </template>
+
+  <script type="module" src="script.js?v=3"></script>
+</body>
+</html>
