@@ -8,7 +8,6 @@ FILES
 - database.rules.json
 
 WORKSPACE ACCESS
-Current shared code: LIONS2026
 The login can remember access for 30 days. Use Lock Workspace to remove access from a device.
 
 FIREBASE SETUP
