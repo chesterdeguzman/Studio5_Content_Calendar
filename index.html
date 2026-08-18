@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Interactive monthly content calendar and client approval dashboard." />
+  <meta name="theme-color" content="#111111" />
+  <title>Studio 5 — Content Calendar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css?v=24" />
+</head>
+<body>
+  <section id="accessGate" class="access-gate" aria-label="Studio5 workspace login">
+    <div class="access-layout">
+      <aside class="access-showcase" aria-hidden="true">
+        <div class="showcase-brand">
+          <div class="access-logo access-logo-large">S5</div>
+          <div>
+            <strong>Studio5</strong>
+            <span>Content Operations</span>
+          </div>
+        </div>
+        <div class="showcase-copy">
+          <p class="eyebrow">One shared creative workspace</p>
+          <h1>Plan. Review.<br />Publish with clarity.</h1>
+          <p>Keep content, feedback, approvals, and monthly targets organised in one collaborative calendar.</p>
+        </div>
+        <div class="showcase-features">
+          <span>Live cloud sync</span>
+          <span>Client approvals</span>
+          <span>Monthly overview</span>
+        </div>
+      </aside>
+
+      <form id="accessForm" class="access-card">
+        <div class="mobile-access-brand">
+          <div class="access-logo">S5</div>
+          <span>Studio5</span>
+        </div>
+        <p class="eyebrow">Secure shared workspace</p>
+        <h2>Welcome back</h2>
+        <p class="access-description">Enter your workspace key to continue to the content calendar.</p>
+        <label for="accessCode">Workspace key</label>
+        <div class="access-input-wrap">
+          <input id="accessCode" type="password" autocomplete="current-password" required placeholder="Enter workspace key" />
+          <button id="toggleAccessCode" type="button" class="access-toggle" aria-label="Show workspace key">Show</button>
+        </div>
+        <label class="remember-row">
+          <input id="rememberAccess" type="checkbox" checked />
+          <span>Keep me signed in on this device for 30 days</span>
+        </label>
+        <p id="accessError" class="access-error hidden" role="alert"></p>
+        <button id="accessSubmit" class="primary-btn access-submit" type="submit">
+          <span class="access-submit-label">Open workspace</span>
+          <span aria-hidden="true">→</span>
+        </button>
+        <div class="access-trust"><span></span> Shared access for your approved team and clients</div>
+      </form>
+    </div>
+    <p class="access-footer">Studio5 Content Calendar · Private workspace</p>
+  </section>
+
+  <div id="calendarApp" class="app-shell hidden">
+    <aside class="sidebar">
+      <div class="brand-block">
+        <div class="logo-mark">S5</div>
+        <div>
+          <h1>Studio 5</h1>
+          <p>Content desk</p>
+        </div>
+      </div>
+
+      <nav class="side-nav">
+        <button class="nav-item active" data-view="calendar"><span>▦</span> Calendar</button>
+        <button class="nav-item" data-view="qc"><span>✓</span> Quality Control</button>
+        <button class="nav-item" data-view="special"><span>★</span> Special Days</button>
+        <button class="nav-item" data-view="overview"><span>◫</span> Overview</button>
+        <button class="nav-item" data-view="links"><span>↗</span> Content Links</button>
+        <button class="nav-item" data-view="usecase"><span>◇</span> Use Case Diagram</button>
+        <button class="nav-item" data-view="sop"><span>▤</span> SOP Library</button>
+        <button class="nav-item" data-view="settings"><span>⚙</span> Settings</button>
+      </nav>
+
+      <div class="sidebar-card">
+        <span class="eyebrow">Monthly target</span>
+        <strong>12 contents</strong>
+        <small>8 carousels · 4 reels</small>
+      </div>
+
+      <div class="sidebar-footer">
+        <button id="exportCsvBtn" class="ghost-btn full">Export CSV</button>
+        <button id="exportPdfBtn" class="ghost-btn full">Export PDF</button>
+        <button id="exportWordBtn" class="ghost-btn full">Export Word</button>
+        <button id="exportDataBtn" class="ghost-btn full">Export JSON Backup</button>
+        <label class="ghost-btn full file-label">
+          Import JSON
+          <input id="importDataInput" type="file" accept=".json" hidden />
+        </label>
+        <button id="resetMonthBtn" class="danger-link">Reset current month</button>
+        <button id="signOutBtn" class="ghost-btn full sign-out-btn" type="button">Sign Out</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Client content workflow</p>
+          <h2 id="pageTitle">Monthly Content Calendar</h2>
+        </div>
+
+        <div class="topbar-actions">
+          <label class="select-control brand-control">
+            <span>Brand</span>
+            <select id="brandSelect" aria-label="Choose brand"></select>
+          </label>
+          <label class="select-control month-control">
+            <span>Month</span>
+            <input id="monthPicker" type="month" aria-label="Choose month" />
+          </label>
+          <div id="syncStatus" class="sync-status" data-state="connecting">Connecting…</div>
+          <button id="requestAssetsBtn" class="ghost-btn">Request New Assets</button>
+          <button id="addContentBtn" class="primary-btn">+ Add Content</button>
+        </div>
+      </header>
+
+      <section id="calendarView" class="view active">
+        <div class="welcome-banner">
+          <div>
+            <p class="eyebrow">Monthly planning workspace</p>
+            <h3>Plan, review and approve every post in one place.</h3>
+            <p>Each week is structured for 2 carousels and 1 reel, with client feedback and approval tracking built in.</p>
+          </div>
+          <div class="banner-shape" aria-hidden="true">✦</div>
+        </div>
+        <div class="calendar-resource-actions"><button id="brandBibleBtn" class="ghost-btn" type="button">Brand Bible / Notes</button></div>
+        <div id="brandBibleReminder" class="brand-bible-reminder hidden"></div>
+        <div id="assetRequestNotice" class="asset-request-notice hidden"></div>
+        <div class="summary-grid">
+          <article class="summary-card">
+            <span>Total Content</span>
+            <strong id="totalCount">0 / 12</strong>
+            <div class="progress"><span id="totalProgress"></span></div>
+          </article>
+
+          <article class="summary-card">
+            <span>Carousels</span>
+            <strong id="carouselCount">0 / 8</strong>
+            <div class="progress"><span id="carouselProgress"></span></div>
+          </article>
+
+          <article class="summary-card">
+            <span>Reels</span>
+            <strong id="reelCount">0 / 4</strong>
+            <div class="progress"><span id="reelProgress"></span></div>
+          </article>
+
+          <article class="summary-card">
+            <span>Approved</span>
+            <strong id="approvedCount">0</strong>
+            <div class="progress"><span id="approvedProgress"></span></div>
+          </article>
+        </div>
+
+        <div class="toolbar">
+          <div class="filter-group">
+            <select id="statusFilter">
+              <option value="all">All statuses</option>
+              <option value="Pending">Pending</option>
+              <option value="Approved">Approved</option>
+              <option value="Revise">Revise</option>
+              <option value="Rejected">Rejected</option>
+            </select>
+
+            <select id="typeFilter">
+              <option value="all">All content types</option>
+              <option value="Carousel">Carousel</option>
+              <option value="Static">Static</option>
+              <option value="Memorable Day / Special Day">Memorable Day / Special Day</option>
+              <option value="Reel">Reel</option>
+              <option value="Talking Head">Talking Head</option>
+            </select>
+
+            <input id="searchInput" type="search" placeholder="Search title, caption, notes..." />
+          </div>
+
+          <div class="view-toggle">
+            <button class="toggle-btn active" data-layout="board">Week Board</button>
+            <button class="toggle-btn" data-layout="table">Table</button>
+          </div>
+        </div>
+
+        <div id="calendarBoard" class="calendar-board"></div>
+        <div id="calendarTableWrap" class="calendar-table-wrap hidden">
+          <table class="calendar-table">
+            <thead>
+              <tr>
+                <th>Week</th>
+                <th>Date</th>
+                <th>Content</th>
+                <th>Type</th>
+                <th>Platform</th>
+                <th>Status</th>
+                <th>Notes</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="calendarTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="qcView" class="view">
+        <div class="panel qc-workspace-panel">
+          <div class="panel-heading special-heading">
+            <div>
+              <p class="eyebrow">Production quality assurance</p>
+              <h3>Quality Control</h3>
+              <p class="panel-copy">Review the selected brand and month in one dedicated queue. Content remains connected to the Calendar, but detailed QC is completed here.</p>
+            </div>
+            <div class="qc-summary-mini" id="qcSummaryMini"></div>
+          </div>
+          <div class="toolbar qc-toolbar">
+            <div class="filter-group">
+              <select id="qcStageFilter">
+                <option value="all">All QC stages</option>
+                <option value="creator">Needs Creator Check</option>
+                <option value="internal">Needs Internal Review</option>
+                <option value="lead">Needs Nicole Approval</option>
+                <option value="ready">Ready to Proceed to Create</option>
+                <option value="revision">Needs Revision</option>
+                <option value="rejected">Rejected</option>
+              </select>
+              <select id="qcTypeFilter">
+                <option value="all">All content types</option>
+                <option value="Carousel">Carousel</option>
+                <option value="Static">Static</option>
+                <option value="Memorable Day / Special Day">Memorable Day / Special Day</option>
+                <option value="Reel">Reel</option>
+                <option value="Talking Head">Talking Head</option>
+              </select>
+              <input id="qcSearchInput" type="search" placeholder="Search title, hook, assignee..." />
+            </div>
+          </div>
+          <div id="qcQueue" class="qc-queue"></div>
+        </div>
+      </section>
+
+      <section id="specialView" class="view">
+        <div class="panel">
+          <div class="panel-heading special-heading">
+            <div>
+              <p class="eyebrow">Brand calendar</p>
+              <h3>Holidays, commemorative and special days</h3>
+              <p class="panel-copy">This calendar starts empty. Your team manually adds the holidays, commemorative days, campaigns, or other important dates needed for each brand.</p>
+            </div>
+            <div class="special-heading-actions">
+              <button id="deleteMonthSpecialDaysBtn" class="danger-btn" type="button">Delete This Month</button>
+              <button id="addSpecialDayBtn" class="primary-btn" type="button">+ Add Special Day</button>
+            </div>
+          </div>
+          <div class="toolbar special-toolbar">
+            <div class="filter-group">
+              <input id="specialSearchInput" type="search" placeholder="Search special days..." />
+              <select id="specialCategoryFilter">
+                <option value="all">All categories</option>
+                <option value="Holiday">Holiday</option>
+                <option value="Commemorative Day">Commemorative Day</option>
+                <option value="Awareness Day">Awareness Day</option>
+                <option value="Seasonal Event">Seasonal Event</option>
+                <option value="Brand Event">Brand Event</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+          </div>
+          <div class="calendar-table-wrap">
+            <table class="calendar-table special-days-table">
+              <thead><tr><th>Date</th><th>Special Day</th><th>Category</th><th>Country / Market</th><th>Notes / Content Opportunity</th><th></th></tr></thead>
+              <tbody id="specialDaysTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="overviewView" class="view">
+        <div class="overview-grid">
+          <article class="panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Brand overview</p>
+                <h3>Monthly completion</h3>
+              </div>
+            </div>
+            <div id="brandOverviewList" class="brand-overview-list"></div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Approval status</p>
+                <h3>Current brand breakdown</h3>
+              </div>
+            </div>
+            <div id="statusBreakdown" class="status-breakdown"></div>
+          </article>
+        </div>
+      </section>
+
+
+      <section id="linksView" class="view">
+        <div class="panel content-links-panel">
+          <div class="panel-heading special-heading">
+            <div>
+              <p class="eyebrow">Batch link library</p>
+              <h3>Content Links</h3>
+              <p class="panel-copy">Keep one shared compilation of content links by brand, content type, and batch/date label. Add links as they become available and delete any entry you no longer need.</p>
+            </div>
+            <button id="addContentLinkBtn" class="primary-btn" type="button">+ Add Content Link</button>
+          </div>
+          <div class="toolbar content-links-toolbar">
+            <div class="filter-group">
+              <input id="contentLinksSearchInput" type="search" placeholder="Search brand, content type, batch..." />
+              <select id="contentLinksBrandFilter">
+                <option value="all">All brands</option>
+              </select>
+            </div>
+          </div>
+          <div id="contentLinksMatrixWrap" class="content-links-matrix-wrap">
+            <div id="contentLinksEmptyState" class="content-links-empty">No content links added yet. Use “+ Add Content Link” to start your batch link compilation.</div>
+            <table id="contentLinksMatrix" class="content-links-matrix hidden">
+              <thead id="contentLinksMatrixHead"></thead>
+              <tbody id="contentLinksMatrixBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+
+      <section id="usecaseView" class="view">
+        <div class="panel usecase-panel"><div class="panel-heading"><div><p class="eyebrow">Production + QA workflow</p><h3>Content Production & Quality Gate</h3><p class="panel-copy">The original planning workflow now includes mandatory strategy, internal QC and Nicole's lead approval before anything is ready for the client.</p></div></div>
+          <div class="usecase-flow" aria-label="Content production and QA workflow">
+            <article class="usecase-step"><span>1</span><div><h4>Client Brief + Brand Bible</h4><p>Review the selected client's current rules, UK English requirements, brand details, imagery rules, product/service priorities, facts and do-not-use instructions.</p></div></article><div class="usecase-arrow">↓</div>
+            <article class="usecase-step"><span>2</span><div><h4>Mandatory Strategy Brief</h4><p>Define the content goal, exact product/service focus, hook, audience benefit, content direction, caption, CTA, required assets, references and anything to avoid.</p></div></article><div class="usecase-arrow">↓</div>
+            <article class="usecase-step"><span>3</span><div><h4>Create the Content</h4><p>Produce one focused post or reel using the latest relevant imagery and the approved brand direction. Reels must have one clear purpose rather than becoming a generic montage.</p></div></article><div class="usecase-arrow">↓</div>
+            <article class="usecase-step"><span>4</span><div><h4>Creator Check</h4><p>The creator completes the editable QC checklist, checking brief accuracy, brand consistency, UK English, factual details, imagery, hook, caption and CTA. Reels include Premium Music Vibe QC.</p></div></article><div class="usecase-arrow">↓</div>
+            <article class="usecase-step"><span>5</span><div><h4>Internal Review</h4><p>A second reviewer checks the work against the strategy brief and Brand Bible. Any failed review records a structured reason so recurring quality issues can be measured.</p></div></article><div class="usecase-arrow">↓</div>
+            <article class="usecase-step"><span>6</span><div><h4>Nicole / Lead Approval</h4><p>Nicole provides the final internal creative approval. This makes the lead standard an explicit system gate rather than an informal expectation.</p></div></article><div class="usecase-arrow">↓</div>
+            <article class="usecase-step"><span>7</span><div><h4>Proceed to Create</h4><p>Each QC stage is completed in its own review window. Once Creator Check, Internal Review and Nicole / Lead Approval are approved, Nicole can mark the item Proceed to Create. The Calendar status is then automatically set to Approved.</p></div></article><div class="usecase-arrow">↓</div>
+            <article class="usecase-step"><span>8</span><div><h4>Client Review → Production</h4><p>The client can approve or request revisions. Approved work proceeds to production/publishing; revisions return to the team with a clear reason and feedback.</p></div></article>
+          </div><div class="usecase-note"><strong>Quality principle:</strong> What are we selling or communicating? Is it immediately clear? Does it follow the brief exactly? Is the imagery current? Is the hook strong? Would we stop and engage with it ourselves?</div>
+        </div>
+      </section>
+
+      <section id="sopView" class="view"><div class="panel sop-panel"><div class="panel-heading special-heading"><div><p class="eyebrow">Per-brand resources</p><h3>SOP Library</h3><p class="panel-copy">Upload multiple PDF SOPs and save multiple SOP links for each brand. Every resource can have its own notes.</p></div><button id="addSopResourceBtn" class="primary-btn" type="button">+ Add SOP Resource</button></div><div id="sopResourceList" class="sop-resource-list"></div></div></section>
+
+      <section id="settingsView" class="view">
+        <div class="settings-grid">
+          <article class="panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Brand management</p>
+                <h3>Add or remove brands</h3>
+              </div>
+            </div>
+
+            <form id="addBrandForm" class="inline-form">
+              <input id="newBrandInput" type="text" placeholder="New brand name" required />
+              <button class="primary-btn" type="submit">Add Brand</button>
+            </form>
+
+            <div id="brandManagementList" class="brand-management-list"></div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Monthly requirements</p>
+                <h3>Content targets</h3>
+              </div>
+            </div>
+
+            <div class="requirements">
+              <label>
+                Total content per month
+                <input id="targetTotal" type="number" min="1" value="12" />
+              </label>
+              <label>
+                Carousel target
+                <input id="targetCarousel" type="number" min="0" value="8" />
+              </label>
+              <label>
+                Reel target
+                <input id="targetReel" type="number" min="0" value="4" />
+              </label>
+              <button id="saveTargetsBtn" class="primary-btn">Save Targets</button>
+            </div>
+          </article>
+
+
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="contentDialog">
+    <form id="contentForm" method="dialog">
+      <div class="modal-header">
+        <div>
+          <p class="eyebrow">Content details</p>
+          <h3 id="dialogTitle">Add Content</h3>
+        </div>
+        <button type="button" id="closeDialogBtn" class="icon-btn" aria-label="Close">×</button>
+      </div>
+
+      <input id="contentId" type="hidden" />
+
+      <div class="form-grid">
+        <label>
+          Week
+          <select id="contentWeek" required>
+            <option value="1">Week 1</option>
+            <option value="2">Week 2</option>
+            <option value="3">Week 3</option>
+            <option value="4">Week 4</option>
+          </select>
+        </label>
+
+        <label>
+          Publish Date
+          <input id="contentDate" type="date" />
+        </label>
+
+        <label class="span-2">
+          Content Title / Topic
+          <input id="contentTitle" type="text" placeholder="e.g. 5 Signs Your Roof Needs Repair" required />
+        </label>
+
+        <label>
+          Content Category
+          <select id="contentType" required>
+            <option value="Carousel">Carousel</option>
+            <option value="Static">Static</option>
+            <option value="Memorable Day / Special Day">Memorable Day / Special Day</option>
+            <option value="Reel">Reel</option>
+            <option value="Talking Head">Talking Head</option>
+          </select>
+        </label>
+
+        <div id="contentBrandRules" class="span-2 content-brand-rules"></div>
+        <div class="span-2 strategy-heading"><p class="eyebrow">Mandatory strategy brief</p><strong>Define the purpose before design begins.</strong></div>
+        <label class="span-2">Content Goal *<textarea id="contentGoal" rows="2" required placeholder="What are we trying to sell, promote or communicate?"></textarea></label>
+        <label class="span-2">Product / Service Focus *<textarea id="productFocus" rows="2" required placeholder="Exactly what is this content about?"></textarea></label>
+        <label class="span-2">Hook *<textarea id="contentHook" rows="2" required placeholder="What's the first thing the audience sees or hears?"></textarea></label>
+        <label class="span-2">Why should they care? *<textarea id="audienceBenefit" rows="2" required placeholder="What is the audience benefit or interest?"></textarea></label>
+        <label class="span-2">Content Direction *<textarea id="contentFocus" rows="4" required placeholder="What specifically should happen in the post or reel?"></textarea></label>
+
+        <label>
+          Batch
+          <input id="contentBatch" type="text" placeholder="e.g. Batch 1, July Launch" />
+        </label>
+
+        <label>
+          Platform
+          <select id="contentPlatform">
+            <option value="Instagram">Instagram</option>
+            <option value="Facebook">Facebook</option>
+            <option value="Instagram + Facebook">Instagram + Facebook</option>
+            <option value="LinkedIn">LinkedIn</option>
+            <option value="TikTok">TikTok</option>
+            <option value="YouTube">YouTube</option>
+            <option value="Multiple Platforms">Multiple Platforms</option>
+          </select>
+        </label>
+
+        <label>
+          Content Pillar
+          <input id="contentPillar" type="text" placeholder="Educational, promotional, testimonial..." />
+        </label>
+
+        <label>
+          Assigned To
+          <input id="contentAssignee" type="text" placeholder="Designer / Editor / Copywriter" />
+        </label>
+
+        <label class="span-2">
+          Caption / Content Copy
+          <textarea id="contentCaption" rows="4" required placeholder="Insert caption, body copy, or talking points..."></textarea>
+        </label>
+
+        <label class="span-2">CTA *<input id="contentCta" type="text" required placeholder="What should the audience do next?" /></label>
+        <label class="span-2">Required Imagery / Assets *<textarea id="requiredAssets" rows="2" required placeholder="Specify the current imagery, footage or assets required."></textarea></label>
+        <label class="span-2">Reference Content<textarea id="referenceContent" rows="2" placeholder="Links, examples or reference notes..."></textarea></label>
+        <label class="span-2">Do Not Use / Avoid<textarea id="avoidContent" rows="2" placeholder="AI imagery, old assets, wrong locations, restricted styles, etc."></textarea></label>
+
+        <label class="span-2">
+          Visual Direction / Reel Notes
+          <textarea id="contentVisual" rows="3" placeholder="Describe the visual, footage, transitions, graphics, references..."></textarea>
+        </label>
+
+        <label>
+          Reference Link
+          <input id="contentLink" type="url" placeholder="https://..." />
+        </label>
+
+        <label>
+          Approval Status
+          <select id="contentStatus">
+            <option value="Pending">Pending</option>
+            <option value="Approved">Approved</option>
+            <option value="Revise">Revise</option>
+            <option value="Rejected">Rejected</option>
+          </select>
+        </label>
+
+        <label class="span-2">
+          Client Notes
+          <textarea id="contentNotes" rows="4" placeholder="Client can type approval notes or revision feedback here..."></textarea>
+        </label>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" id="deleteContentBtn" class="danger-btn hidden">Delete</button>
+        <div class="modal-actions-right">
+          <button type="button" id="duplicateContentBtn" class="ghost-btn hidden">Duplicate</button>
+          <button type="button" id="cancelDialogBtn" class="ghost-btn">Cancel</button>
+          <button type="submit" class="primary-btn">Save Content</button>
+        </div>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="creatorQcDialog" class="stage-qc-dialog" data-qc-stage="creator">
+    <form class="stage-qc-form" data-qc-stage="creator" method="dialog">
+      <div class="modal-header"><div><p class="eyebrow">QC stage 1</p><h3 id="creatorQcTitle">Creator Check</h3></div><button type="button" class="icon-btn qc-close-btn" aria-label="Close">×</button></div>
+      <div class="qc-dialog-body"><div class="qc-content-context stage-qc-context"></div><div class="content-brand-rules stage-qc-brand-rules"></div><section class="quality-gate"><div class="quality-gate-head"><div><p class="eyebrow">Creator review</p><h4>Creator Check</h4></div><button type="button" class="ghost-btn stage-add-qc">+ Add QC</button></div><div class="qc-checklist stage-qc-checklist"></div><label>Revision / Rejection Reason<select class="stage-failure-reason"><option value="">None</option><option>Brief missed</option><option>Wrong imagery</option><option>Brand guideline</option><option>Incorrect information</option><option>Weak concept</option><option>Weak hook/copy</option><option>Repetitive</option><option>Wrong store/location</option><option>Other</option></select></label><label>Reviewer Notes<textarea class="stage-review-notes" rows="3" placeholder="Optional internal notes for this QC stage..."></textarea></label><p class="field-help stage-qc-message"></p></section></div>
+      <div class="modal-actions"><div class="qc-outcome-actions"><button type="button" class="danger-btn stage-reject">Reject</button><button type="button" class="ghost-btn stage-revise">Needs Revision</button></div><div class="modal-actions-right"><button type="button" class="ghost-btn qc-cancel-btn">Cancel</button><button type="button" class="ghost-btn stage-reset-pending">Reset to Pending</button><button type="button" class="ghost-btn stage-save-progress">Save Progress</button><button type="button" class="primary-btn stage-approve">Approve Creator Check</button></div></div>
+    </form>
+  </dialog>
+
+  <dialog id="internalQcDialog" class="stage-qc-dialog" data-qc-stage="internal">
+    <form class="stage-qc-form" data-qc-stage="internal" method="dialog">
+      <div class="modal-header"><div><p class="eyebrow">QC stage 2</p><h3 id="internalQcTitle">Internal Review</h3></div><button type="button" class="icon-btn qc-close-btn" aria-label="Close">×</button></div>
+      <div class="qc-dialog-body"><div class="qc-content-context stage-qc-context"></div><div class="content-brand-rules stage-qc-brand-rules"></div><section class="quality-gate"><div class="quality-gate-head"><div><p class="eyebrow">Internal review</p><h4>Internal Review</h4></div><button type="button" class="ghost-btn stage-add-qc">+ Add QC</button></div><div class="qc-checklist stage-qc-checklist"></div><label>Revision / Rejection Reason<select class="stage-failure-reason"><option value="">None</option><option>Brief missed</option><option>Wrong imagery</option><option>Brand guideline</option><option>Incorrect information</option><option>Weak concept</option><option>Weak hook/copy</option><option>Repetitive</option><option>Wrong store/location</option><option>Other</option></select></label><label>Reviewer Notes<textarea class="stage-review-notes" rows="3" placeholder="Optional internal notes for this QC stage..."></textarea></label><p class="field-help stage-qc-message"></p></section></div>
+      <div class="modal-actions"><div class="qc-outcome-actions"><button type="button" class="danger-btn stage-reject">Reject</button><button type="button" class="ghost-btn stage-revise">Needs Revision</button></div><div class="modal-actions-right"><button type="button" class="ghost-btn qc-cancel-btn">Cancel</button><button type="button" class="ghost-btn stage-reset-pending">Reset to Pending</button><button type="button" class="ghost-btn stage-save-progress">Save Progress</button><button type="button" class="primary-btn stage-approve">Approve Internal Review</button></div></div>
+    </form>
+  </dialog>
+
+  <dialog id="nicoleQcDialog" class="stage-qc-dialog" data-qc-stage="nicole">
+    <form class="stage-qc-form" data-qc-stage="nicole" method="dialog">
+      <div class="modal-header"><div><p class="eyebrow">QC stage 3</p><h3 id="nicoleQcTitle">Nicole / Lead Approval</h3></div><button type="button" class="icon-btn qc-close-btn" aria-label="Close">×</button></div>
+      <div class="qc-dialog-body"><div class="qc-content-context stage-qc-context"></div><div class="content-brand-rules stage-qc-brand-rules"></div><section class="quality-gate"><div class="quality-gate-head"><div><p class="eyebrow">Lead review</p><h4>Nicole / Lead Approval</h4></div><button type="button" class="ghost-btn stage-add-qc">+ Add QC</button></div><div class="qc-checklist stage-qc-checklist"></div><label>Revision / Rejection Reason<select class="stage-failure-reason"><option value="">None</option><option>Brief missed</option><option>Wrong imagery</option><option>Brand guideline</option><option>Incorrect information</option><option>Weak concept</option><option>Weak hook/copy</option><option>Repetitive</option><option>Wrong store/location</option><option>Other</option></select></label><label>Reviewer Notes<textarea class="stage-review-notes" rows="3" placeholder="Optional Nicole / lead notes..."></textarea></label><p class="field-help stage-qc-message"></p></section></div>
+      <div class="modal-actions"><div class="qc-outcome-actions"><button type="button" class="danger-btn stage-reject">Reject</button><button type="button" class="ghost-btn stage-revise">Needs Revision</button></div><div class="modal-actions-right"><button type="button" class="ghost-btn qc-cancel-btn">Cancel</button><button type="button" class="ghost-btn stage-reset-pending">Reset to Pending</button><button type="button" class="ghost-btn stage-save-progress">Save Progress</button><button type="button" class="primary-btn stage-approve">Approve & Proceed to Create</button></div></div>
+    </form>
+  </dialog>
+
+  <dialog id="specialDayDialog">
+    <form id="specialDayForm" method="dialog">
+      <div class="modal-header"><div><p class="eyebrow">Brand special-day calendar</p><h3 id="specialDialogTitle">Add Special Day</h3></div><button type="button" id="closeSpecialDialogBtn" class="icon-btn">×</button></div>
+      <div class="form-grid">
+        <label>Date<input id="specialDate" type="date" required /></label>
+        <label>Category<select id="specialCategory"><option>Holiday</option><option>Commemorative Day</option><option>Awareness Day</option><option>Seasonal Event</option><option>Brand Event</option><option>Other</option></select></label>
+        <label class="span-2">Name<input id="specialName" type="text" placeholder="e.g. International Women’s Day" required /></label>
+        <label>Country / Market<input id="specialMarket" type="text" placeholder="e.g. UK, Philippines, Global" /></label>
+        <label>Repeat<select id="specialRepeat"><option value="none">One-time</option><option value="yearly">Every year</option></select></label>
+        <label class="span-2">Notes / Content Opportunity<textarea id="specialNotes" rows="4" placeholder="Campaign angle, greeting, product tie-in, content reminders..."></textarea></label>
+      </div>
+      <div class="modal-actions"><button type="button" id="deleteSpecialDayBtn" class="danger-btn hidden">Delete</button><div class="modal-actions-right"><button type="button" id="cancelSpecialDialogBtn" class="ghost-btn">Cancel</button><button type="submit" class="primary-btn">Save Special Day</button></div></div>
+    </form>
+  </dialog>
+
+
+  <dialog id="assetRequestDialog">
+    <form id="assetRequestForm" method="dialog">
+      <div class="modal-header"><div><p class="eyebrow">Asset requirement</p><h3>Request New Client Assets</h3></div><button type="button" id="closeAssetRequestBtn" class="icon-btn">×</button></div>
+      <div class="form-grid">
+        <div class="span-2 asset-choice-group">
+          <p class="field-label">Does the designer need new assets from the client?</p>
+          <div class="asset-choice-buttons">
+            <label><input type="radio" name="assetNeeded" value="yes" required><span>Yes, new assets are needed</span></label>
+            <label><input type="radio" name="assetNeeded" value="no" required><span>No, current assets are enough</span></label>
+          </div>
+        </div>
+        <label class="span-2">Message for the client<textarea id="assetRequestMessage" rows="5" placeholder="Explain what assets are needed, why they are needed, or confirm that the existing assets are sufficient." required></textarea></label>
+        <p class="span-2 field-help">This message will be visible in the calendar for the selected brand and month.</p>
+      </div>
+      <div class="modal-actions"><button type="button" id="removeAssetRequestBtn" class="danger-btn hidden">Remove Response</button><div class="modal-actions-right"><button type="button" id="cancelAssetRequestBtn" class="ghost-btn">Cancel</button><button type="submit" class="primary-btn">Save Asset Response</button></div></div>
+    </form>
+  </dialog>
+
+  <dialog id="contentLinkDialog">
+    <form id="contentLinkForm" method="dialog">
+      <div class="modal-header"><div><p class="eyebrow">Batch link library</p><h3>Add Content Link</h3></div><button type="button" id="closeContentLinkDialogBtn" class="icon-btn" aria-label="Close">×</button></div>
+      <div class="form-grid">
+        <label>Brand<select id="contentLinkBrand" required></select></label>
+        <label>Content<select id="contentLinkType" required><option value="Carousels">Carousels</option><option value="Reels">Reels</option><option value="Static">Static</option><option value="Talking Head">Talking Head</option><option value="Other">Other</option></select></label>
+        <label class="span-2">Date / Batch Label<input id="contentLinkBatch" type="text" placeholder="e.g. February, Batch 4, Batch 5 (May)" required /></label>
+        <label class="span-2">Link<input id="contentLinkUrl" type="url" placeholder="https://..." required /></label>
+        <p class="span-2 field-help">The matrix automatically groups matching batch/date labels into columns, similar to your link compilation sheet.</p>
+      </div>
+      <div class="modal-actions"><span></span><div class="modal-actions-right"><button type="button" id="cancelContentLinkDialogBtn" class="ghost-btn">Cancel</button><button type="submit" class="primary-btn">Save Link</button></div></div>
+    </form>
+  </dialog>
+
+
+  <dialog id="csvExportDialog">
+    <form id="csvExportForm" method="dialog">
+      <div class="modal-header"><div><p class="eyebrow">Data export</p><h3>Export CSV</h3></div><button type="button" id="closeCsvDialogBtn" class="icon-btn">×</button></div>
+      <div class="form-grid">
+        <label>Export scope<select id="csvScope"><option value="all">All data / all brands</option><option value="brand">Current brand</option><option value="month">Current brand and month</option><option value="batch">Selected batch</option><option value="dateRange">Selected date range</option></select></label>
+        <label>Include<select id="csvDataset"><option value="content">Content calendar</option><option value="specialDays">Special days calendar</option><option value="both">Content + special days</option></select></label>
+        <label id="csvBatchField" class="span-2 hidden">Batch<select id="csvBatchSelect"></select></label>
+        <label id="csvStartField" class="hidden">Start date<input id="csvStartDate" type="date" /></label>
+        <label id="csvEndField" class="hidden">End date<input id="csvEndDate" type="date" /></label>
+        <p class="span-2 field-help">CSV exports include every saved value, plus brand, month, record ID, and record type.</p>
+      </div>
+      <div class="modal-actions"><span></span><div class="modal-actions-right"><button type="button" id="cancelCsvDialogBtn" class="ghost-btn">Cancel</button><button type="submit" class="primary-btn">Download CSV</button></div></div>
+    </form>
+  </dialog>
+
+
+  <dialog id="brandBibleDialog"><form id="brandBibleForm" method="dialog"><div class="modal-header"><div><p class="eyebrow">Selected brand</p><h3 id="brandBibleTitle">Brand Bible / Notes</h3></div><button type="button" id="closeBrandBibleBtn" class="icon-btn">×</button></div><div class="modal-body-stack"><div class="brand-bible-intro-row"><div class="panel-copy">Each category is saved independently. Add as many notes as needed under the correct category; notes from one category will not appear in another.</div><button type="button" id="addBrandBibleCategoryBtn" class="primary-btn">+ Add Category</button></div><div id="brandBibleList" class="brand-bible-list"></div></div><div class="modal-actions"><span></span><div class="modal-actions-right"><button type="button" id="cancelBrandBibleBtn" class="ghost-btn">Close</button><button type="submit" class="primary-btn">Save Brand Bible</button></div></div></form></dialog>
+  <dialog id="sopResourceDialog"><form id="sopResourceForm" method="dialog"><div class="modal-header"><div><p class="eyebrow">Per-brand SOP</p><h3>Add SOP Resource</h3></div><button type="button" id="closeSopResourceBtn" class="icon-btn">×</button></div><div class="form-grid"><label>Resource Type<select id="sopResourceType"><option value="link">SOP Link</option><option value="pdf">PDF Upload</option></select></label><label>Title<input id="sopResourceTitle" required placeholder="e.g. Brand Voice SOP" /></label><label id="sopLinkField" class="span-2">Link<input id="sopResourceUrl" type="url" placeholder="https://..." /></label><label id="sopFileField" class="span-2 hidden">PDF File<input id="sopResourceFile" type="file" accept="application/pdf,.pdf" /></label><label class="span-2">Notes<textarea id="sopResourceNotes" rows="4" placeholder="Notes for this SOP resource..."></textarea></label></div><div class="modal-actions"><span></span><div class="modal-actions-right"><button type="button" id="cancelSopResourceBtn" class="ghost-btn">Cancel</button><button type="submit" class="primary-btn">Save SOP Resource</button></div></div></form></dialog>
+
+  <template id="contentCardTemplate">
+    <article class="content-card">
+      <div class="card-top">
+        <span class="type-badge"></span>
+        <button class="icon-btn edit-btn" aria-label="Edit content">•••</button>
+      </div>
+      <h4 class="card-title"></h4>
+      <p class="card-caption"></p>
+      <div class="meta-row">
+        <span class="date-text"></span>
+        <span class="platform-text"></span>
+      </div>
+      <div class="status-actions">
+        <button data-status="Approved">Approve</button>
+        <button data-status="Revise">Revise</button>
+        <button data-status="Rejected">Reject</button>
+      </div>
+      <div class="client-note-preview"></div>
+      <div class="card-footer">
+        <span class="status-pill"></span>
+        <span class="assignee-text"></span>
+      </div>
+    </article>
+  </template>
+
+  <script type="module" src="script.js?v=24"></script>
+</body>
+</html>
